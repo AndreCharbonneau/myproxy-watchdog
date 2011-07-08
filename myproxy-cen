@@ -38,15 +38,15 @@ def parse_myproxy_admin_query_output(output):
             if len(entry) != 0:
                 entries.append(entry.copy())
             entry.clear()
-            entry['owner'] = line.split(' ', 1)[1]
+            entry['owner'] = line.split(' ', 1)[1].strip()
             entry['username'] = ''
             entry['name'] = ''
         elif line.startswith('username: '):
-            entry['username'] = line.split(' ', 1)[1]
+            entry['username'] = line.split(' ', 1)[1].strip()
         elif line.startswith('name: '):
-            entry['name'] = line.split(' ', 1)[1]
+            entry['name'] = line.split(' ', 1)[1].strip()
         elif line.startswith('timeleft: '):
-            entry['timeleft'] = line.split(' ')[1]
+            entry['timeleft'] = line.split(' ')[1].strip()
 
     if entry != None:
         entries.append(entry.copy())
@@ -102,7 +102,7 @@ def process_entries(entries):
             if hms_to_h(entry['timeleft']) < recipient_threshold:
                 notify_recipient(entry, recipient)
             else:
-                print 'Threshold not exceeded.. staying quiet.'
+                print '%d does not exceed threshold (%d). Staying quiet.' % (hms_to_h(entry['timeleft']), recipient_threshold)
 
 
 

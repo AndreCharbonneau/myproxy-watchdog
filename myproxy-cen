@@ -97,7 +97,7 @@ def process_entries(entries):
     notifications_data = {}
     notifications_data_path = get_config().get('myproxy_cen','notifications_data')
     try:
-        notifications_data = json.load(notifications_data_path, 'r'))
+        notifications_data = json.load(open(notifications_data_path, 'r'))
         print notifications_data
     except Exception, e:
         syslog.syslog('Missing or invalid notification data file: %s' % (notifications_data_path))

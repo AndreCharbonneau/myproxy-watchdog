@@ -4,6 +4,8 @@ import ConfigParser, os, sys
 import syslog
 import subprocess
 import json
+import smtplib
+from email.mime.text import MIMEText
 
 config = None
 
@@ -36,6 +38,8 @@ def parse_myproxy_admin_query_output(output):
                 entries.append(entry)
             entry = {}
             entry['owner'] = line.split(' ', 1)[1]
+            entry['username'] = ''
+            entry['name'] = ''
         elif line.startswith('username: '):
             entry['username'] = line.split(' ', 1)[1]
         elif line.startswith('name: '):
@@ -60,6 +64,27 @@ def get_notification_recipients():
 def hms_to_h(s):
     return s.split(':')[0]
 
+def notify_recipient(entry, recipient):
+    mail_body = """
+The following credentials in %s will expire in %s hours:
+
+Owner: %s
+Creds name: %s
+Username: %s
+
+Please renew your credentials as soon as possible.
+""" % (get_config().get('myproxy_cen','myproxy_server_description'), entry['timeleft'], entry['owner'], entry['username'], entry['name'])
+
+    msg = MIMEText(mail_body)
+    msg['Subject'] = 'myproxy-watchdog notification from %s' % (get_config().get('myproxy_cen','myproxy_server_description'))
+    msg['To'] = recipient[0]
+    msg['From'] = get_config().get('myproxy_cen', 'from_address')
+
+    server = smtplib.SMTP(get_config().get('myproxy_cen', 'smtp_server'))
+    server.sendmail(msg['From'], [msg['To']], msg.as_string())
+    server.quit()
+    syslog.syslog(syslog.LOG_INFO, 'notification sent to %s' % (msg['To']))
+    
 def process_entries(entries):
     recipients = get_notification_recipients()
     if recipients == None:

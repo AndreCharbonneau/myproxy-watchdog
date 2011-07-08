@@ -56,9 +56,9 @@ def parse_myproxy_admin_query_output(output):
                 
 def get_notification_recipients():
     if get_config().has_option('myproxy_cen','notification_recipients'):
-        print get_config().get('myproxy_cen','notification_recipients')
         # d = json.loads('{"DN":["andre@titanium.sao.nrc.ca", 12]}')
         recipients = json.loads(get_config().get('myproxy_cen','notification_recipients'))
+        syslog.syslog(syslog.LOG_DEBUG, 'Recipients: %s' % (recipients))
         return recipients
     else:
         syslog.syslog(syslog.LOG_INFO, 'No recipients found in config file.')
@@ -72,8 +72,8 @@ def notify_recipient(entry, recipient):
 The following credentials in %s will expire in %s hours:
 
 Owner: %s
-Creds name: %s
 Username: %s
+Creds name: %s
 
 Please renew your credentials as soon as possible.
 """ % (get_config().get('myproxy_cen','myproxy_server_description'), entry['timeleft'], entry['owner'], entry['username'], entry['name'])
@@ -93,19 +93,31 @@ def process_entries(entries):
     if recipients == None:
         return
 
+    # Load data about previously sent notifications
+    notifications_data = {}
+    notifications_data_path = get_config().get('myproxy_cen','notifications_data')
+    try:
+        notifications_data = json.load(notifications_data_path, 'r'))
+        print notifications_data
+    except Exception, e:
+        syslog.syslog('Missing or invalid notification data file: %s' % (notifications_data_path))
+
     for entry in entries:
         if entry['owner'] in recipients:
-            print 'Creds owner is in recipient list.'
             recipient = recipients[entry['owner']]
             recipient_email = recipient[0]
             recipient_threshold = recipient[1]
+            notifications_data_key = '%s~%s~%s' % (entry['owner'], entry['username'], entry['name'])
             if hms_to_h(entry['timeleft']) < recipient_threshold:
                 notify_recipient(entry, recipient)
+                notifications_data[notification_data_key] = True
             else:
-                print '%d does not exceed threshold (%d). Staying quiet.' % (hms_to_h(entry['timeleft']), recipient_threshold)
+                syslog.syslog(syslog.LOG_DEBUG, '%d does not exceed threshold (%d). Staying quiet.' % (hms_to_h(entry['timeleft']), recipient_threshold))
+                del(notifications_data[notification_data_key])
 
-
-
+    # Write notifications data.
+    json.dump(notifications_data, open(notifications_data_path, 'w'))
+    syslog.syslog(syslog.LOG_DEBUG, 'Notifications data saved to %s' % (notifications_data_path))
 
 
 if __name__ == '__main__':

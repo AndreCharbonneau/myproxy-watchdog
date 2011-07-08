@@ -26,11 +26,12 @@ def get_myproxy_admin_query_output():
         myproxy_admin_query_cmd = get_config().get('myproxy_cen','myproxy_admin_query')
     cmd_output = subprocess.check_output([myproxy_admin_query_cmd])
 
-    return cmd_output.split('\n')
+    return cmd_output.splitlines()
 
 def parse_myproxy_admin_query_output(output):
     entries = []
     entry = None
+    print output
 
     for line in output:
         if line.startswith('ownwer: '):

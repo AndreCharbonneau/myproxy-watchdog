@@ -37,7 +37,7 @@ def parse_myproxy_admin_query_output(output):
         print line.split(' ', 1)
         print ''
 
-        if line.startswith('ownwer: '):
+        if line.startswith('owner: '):
             print len(entry)
             if len(entry) != 0:
                 print "> adding entry"

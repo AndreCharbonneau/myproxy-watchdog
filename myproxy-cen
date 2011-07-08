@@ -100,7 +100,7 @@ def process_entries(entries):
             if hms_to_h(entry['timeleft']) < recipient_threshold:
                 notify_recipient(entry, recipient)
             else:
-                print 'Threshold not exceeded.. staying quiet.
+                print 'Threshold not exceeded.. staying quiet.'
 
 
 

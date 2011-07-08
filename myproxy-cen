@@ -34,6 +34,9 @@ def parse_myproxy_admin_query_output(output):
 
     for line in output:
         print line
+        print line.split(' ', 1)
+        print ''
+
         if line.startswith('ownwer: '):
             if entry != None:
                 entries.append(entry)

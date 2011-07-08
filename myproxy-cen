@@ -55,7 +55,7 @@ def parse_myproxy_admin_query_output(output):
                 
 def get_notification_recipients():
     if get_config().has_option('myproxy_cen','notification_recipients'):
-        print get_config().has_option('myproxy_cen','notification_recipients')
+        print get_config().get('myproxy_cen','notification_recipients')
         # d = json.loads('{"DN":["andre@titanium.sao.nrc.ca", 12]}')
         recipients = json.loads(get_config().get('myproxy_cen','notification_recipients'))
         return recipients

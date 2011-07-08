@@ -98,7 +98,6 @@ def process_entries(entries):
     notifications_data_path = get_config().get('myproxy_cen','notifications_data')
     try:
         notifications_data = json.load(open(notifications_data_path, 'r'))
-        print notifications_data
     except Exception, e:
         syslog.syslog('Missing or invalid notification data file: %s' % (notifications_data_path))
 
@@ -112,6 +111,9 @@ def process_entries(entries):
                 if not notifications_data_key in notifications_data:
                     notify_recipient(entry, recipient)
                     notifications_data[notifications_data_key] = True
+                else:
+                    # Notification already sent
+                    syslog.syslog(syslog.LOG_DEBUG, 'Notification for %s %s %s already sent; skipping' % (entry['owner'], entry['username'], entry['name']))
             else:
                 syslog.syslog(syslog.LOG_DEBUG, '%d does not exceed threshold (%d). Staying quiet.' % (hms_to_h(entry['timeleft']), recipient_threshold))
                 if notifications_data_key in notifications_data:

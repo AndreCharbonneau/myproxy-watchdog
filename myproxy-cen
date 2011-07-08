@@ -96,8 +96,7 @@ def process_entries(entries):
             recipient_email = recipient[0]
             recipient_threshold = recipient[1]
             if hms_to_h(entry['timeleft']) < recipient_threshold:
-                syslog.syslog(syslog.LOG_DEBUG, 'Sending notification to %s <%s>' % (entry['owner'], recipient_email))
-
+                notify_recipient(entry, recipient)
 
 
 

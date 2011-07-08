@@ -30,7 +30,7 @@ def get_myproxy_admin_query_output():
 
 def parse_myproxy_admin_query_output(output):
     entries = []
-    entry = None
+    entry = {}
 
     for line in output:
         print line
@@ -38,9 +38,9 @@ def parse_myproxy_admin_query_output(output):
         print ''
 
         if line.startswith('ownwer: '):
-            if entry != None:
-                entries.append(entry)
-            entry = {}
+            if len(entry) != 0:
+                entries.append(entry.copy())
+            entry.clear()
             entry['owner'] = line.split(' ', 1)[1]
             entry['username'] = ''
             entry['name'] = ''
@@ -52,7 +52,7 @@ def parse_myproxy_admin_query_output(output):
             entry['timeleft'] = line.split(' ')[1]
 
     if entry != None:
-        entries.append(entry)
+        entries.append(entry.copy())
 
     syslog.syslog(syslog.LOG_DEBUG, '%d entries parsed.' % (len(entries)))
     return entries

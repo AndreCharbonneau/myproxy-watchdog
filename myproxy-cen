@@ -33,14 +33,8 @@ def parse_myproxy_admin_query_output(output):
     entry = {}
 
     for line in output:
-        print line
-        print line.split(' ', 1)
-        print ''
-
         if line.startswith('owner: '):
-            print len(entry)
             if len(entry) != 0:
-                print "> adding entry"
                 entries.append(entry.copy())
             entry.clear()
             entry['owner'] = line.split(' ', 1)[1]
@@ -97,12 +91,16 @@ def process_entries(entries):
         return
 
     for entry in entries:
+        print 'Processing entry %s' % (entry)
         if entry['owner'] in recipients:
+            print 'Creds owner is in recipient list.'
             recipient = recipients[entry['owner']]
             recipient_email = recipient[0]
             recipient_threshold = recipient[1]
             if hms_to_h(entry['timeleft']) < recipient_threshold:
                 notify_recipient(entry, recipient)
+            else:
+                print 'Threshold not exceeded.. staying quiet.
 
 
 

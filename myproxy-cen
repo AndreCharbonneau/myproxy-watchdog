@@ -1,0 +1,95 @@
+#!/usr/bin/python
+
+import ConfigParser, os, sys
+import syslog
+import subprocess
+import json
+
+config = None
+
+def get_config():
+    global config
+    if config == None:
+        config_file_path = '/etc/myproxy-watchdog.conf'
+        config = ConfigParser.ConfigParser()
+        try:
+            config.readfp(open(config_file_path))
+        except Exception, e:
+            sys.exit("Error reading configuration file: %s" % (config_file_path))
+    return config
+
+def get_myproxy_admin_query_output():
+    myproxy_admin_query_cmd = 'myproxy-admin-query'
+    if get_config().has_option('myproxy_cen','myproxy_admin_query'):
+        myproxy_admin_query_cmd = get_config().get('myproxy_cen','myproxy_admin_query')
+    cmd_output = subprocess.check_output([myproxy_admin_query_cmd])
+
+    return cmd_output.split('\n')
+
+def parse_myproxy_admin_query_output(output):
+    entries = []
+    entry = None
+
+    for line in output:
+        if line.startswith('ownwer: '):
+            if entry != None:
+                entries.append(entry)
+            entry = {}
+            entry['owner'] = line.split(' ', 1)[1]
+        elif line.startswith('username: '):
+            entry['username'] = line.split(' ', 1)[1]
+        elif line.startswith('name: '):
+            entry['name'] = line.split(' ', 1)[1]
+        elif line.startswith('timeleft: '):
+            entry['timeleft'] = line.split(' ')[1]
+
+    if entry != None:
+        entries.append(entry)
+
+    syslog.syslog(syslog.LOG_DEBUG, '%d entries parsed.' % (len(entries)))
+    return entries
+                
+def get_notification_recipients():
+    if get_config().has_option('myproxy_cen','notification_recipients'):
+        # d = json.loads('{"DN":["andre@titanium.sao.nrc.ca", 12]}')
+        recipients = json.loads(get_config().get('myproxy_cen','notification_recipients'))
+        return recipients
+    else:
+        return None
+
+def hms_to_h(s):
+    return s.split(':')[0]
+
+def process_entries(entries):
+    recipients = get_notification_recipients()
+    if recipients == None:
+        return
+
+    for entry in entries:
+        if entry['owner'] in recipients:
+            recipient = recipients[entry['owner']]
+            recipient_email = recipient[0]
+            recipient_threshold = recipient[1]
+            if hms_to_h(entry['timeleft']) < recipient_threshold:
+                syslog.syslog(syslog.LOG_DEBUG, 'Sending notification to %s <%s>' % (entry['owner'], recipient_email))
+
+
+
+
+
+
+if __name__ == '__main__':
+
+    syslog.syslog('Proxy expiry check started.')
+
+    # Get myproxy-admin-query output and extract the entries
+    cmd_output = get_myproxy_admin_query_output()
+    entries = parse_myproxy_admin_query_output(cmd_output)
+
+    # Process the entries
+    process_entries(entries)
+
+    # We're done
+    syslog.syslog('Proxy expiry check done.')
+
+    sys.exit()

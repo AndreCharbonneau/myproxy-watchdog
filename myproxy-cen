@@ -59,7 +59,8 @@ def get_notification_recipients():
         recipients = json.loads(get_config().get('myproxy_cen','notification_recipients'))
         return recipients
     else:
-        return None
+        syslog.syslog(syslog.LOG_INFO, 'No recipients found in config file.')
+        return {}
 
 def hms_to_h(s):
     return s.split(':')[0]

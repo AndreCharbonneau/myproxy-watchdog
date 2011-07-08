@@ -32,7 +32,8 @@ def parse_myproxy_admin_query_output(output):
     entries = []
     entry = {}
 
-    for line in output:
+    for l in output:
+        line = l.strip()
         if line.startswith('owner: '):
             if len(entry) != 0:
                 entries.append(entry.copy())
